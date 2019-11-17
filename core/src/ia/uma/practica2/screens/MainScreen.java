@@ -53,6 +53,12 @@ public class MainScreen implements Screen {
                 game.setScreen(new Exercise1(game));
             }
         });
+        button3.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new Exercise3(game));
+            }
+        });
 
         // Create table to show buttons in a row
         Table table = new Table();
