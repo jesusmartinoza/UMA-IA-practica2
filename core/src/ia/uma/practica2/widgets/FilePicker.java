@@ -43,7 +43,7 @@ public class FilePicker extends Dialog {
     }
 
     private void onFileClicked(String filename) {
-        System.out.print(filename);
+        //System.out.print(filename);
     }
 
     /**
