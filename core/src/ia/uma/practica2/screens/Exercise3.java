@@ -3,13 +3,10 @@ package ia.uma.practica2.screens;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.files.FileHandle;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.maps.MapLayers;
-import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
-import com.badlogic.gdx.maps.tiled.tiles.StaticTiledMapTile;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
@@ -21,47 +18,35 @@ import ia.uma.practica2.widgets.FilePicker;
  */
 public class Exercise3 extends ExerciseScreen {
 
-    TiledMap map = new TiledMap();
-    OrthogonalTiledMapRenderer renderer = new OrthogonalTiledMapRenderer(map, 1);
-    Texture textureGrass = new Texture("tileset/grass.png");
-    Texture textureDirt = new Texture("tileset/dirt.png");
+    private char[][] mapData;
 
     public Exercise3(Game game) {
         super(game);
+        mapData = new char[10][10];
     }
 
     private void parseFile(FileHandle fileHandle) {
         String content = fileHandle.readString();
         String[] lines = content.split(System.getProperty("line.separator"));
-        MapLayers layers = map.getLayers();
+        int height = Integer.parseInt(lines[1].split(" ")[1]);
+        int width = Integer.parseInt(lines[2].split(" ")[1]);
+        TiledMapTileLayer layer1 = new TiledMapTileLayer(height, width, 2, 2);
+        mapData = new char[width][height];
 
-        TiledMapTileLayer layer1 = new TiledMapTileLayer(512, 512, 4, 4);
+        String[] subarray = new String[lines.length - 4];
+        System.arraycopy(lines, 4, subarray, 0, subarray.length);
 
         int i = 0;
-        for(String l : lines) {
-            if(l.length() > 10) {
-                int j = 0;
-                for(char c : l.toCharArray()) {
-                    TiledMapTileLayer.Cell cell = new TiledMapTileLayer.Cell();
-                    StaticTiledMapTile tile = new StaticTiledMapTile(new TextureRegion(
-                            c == '@'? textureDirt : textureGrass,
-                            0, 0, 162, 164));
-
-                    tile.setOffsetX(i);
-                    tile.setOffsetY(j);
-                    cell.setTile(tile);
-
-                    System.out.print(c);
-
-                    layer1.setCell(i, j, cell);
-                    j++;
-                }
-                i++;
-                layers.add(layer1);
+        for(String l : subarray) {
+            int j = 0;
+            for(char c : l.toCharArray()) {
+                mapData[i][j] = c;
+                System.out.print(c);
+                j++;
             }
+            System.out.println();
+            i++;
         }
-
-        renderer = new OrthogonalTiledMapRenderer(map, 1);
     }
 
     @Override
@@ -92,8 +77,22 @@ public class Exercise3 extends ExerciseScreen {
 
     @Override
     public void render(float delta) {
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for(int i = 0; i < mapData.length; i++)
+        {
+            for(int j = 0; j < mapData[i].length; j++)
+            {
+                int tile = mapData[i][j]; //get tile type+
+                shapeRenderer.setColor(tile == '@' ? Color.valueOf("#fc5c65") : Color.valueOf("#45aaf2"));
+                shapeRenderer.rect(i, j, 1, 1);
+            }
+        }
+        this.shapeRenderer.end();
+
         super.render(delta);
-        renderer.render();
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 
@@ -15,9 +16,11 @@ public class ExerciseScreen implements Screen {
     private Game game;
     protected Skin skin;
     protected Stage stage;
+    protected ShapeRenderer shapeRenderer;
 
     public ExerciseScreen(Game game) {
         this.game = game;
+        this.shapeRenderer = new ShapeRenderer();
     }
 
     @Override
@@ -28,9 +31,6 @@ public class ExerciseScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
         stage.draw();
         stage.act();
     }
