@@ -16,12 +16,14 @@ public class MapNode {
     public static float MAX_VALUE = 99999;
 
     private char value; // @ for obstacle and . for path
-    private float f;
-    private float g;
-    private float h;
+    private double f;
+    private double g;
+    private double h;
     private int row;
     private int col;
     private Color color;
+    private boolean diagonal;
+    private MapNode parent;
 
     public MapNode(char value, int row, int col) {
         this.value = value;
@@ -29,8 +31,9 @@ public class MapNode {
         this.col = col;
         this.f = MAX_VALUE;
         this.g = MAX_VALUE;
-        this.h = MAX_VALUE;
+        this.h = 0;
         this.color = isObstacle() ? Color.GRAY : Color.DARK_GRAY;
+        this.diagonal = false;
     }
 
     public void draw(ShapeRenderer shapeRenderer) {
@@ -60,27 +63,27 @@ public class MapNode {
         return col;
     }
 
-    public void setF(float f) {
+    public void setF(double f) {
         this.f = f;
     }
 
-    public void setG(float g) {
+    public void setG(double g) {
         this.g = g;
     }
 
-    public void setH(float h) {
+    public void setH(double h) {
         this.h = h;
     }
 
-    public float getF() {
+    public double getF() {
         return f;
     }
 
-    public float getG() {
+    public double getG() {
         return g;
     }
 
-    public float getH() {
+    public double getH() {
         return h;
     }
 
@@ -90,5 +93,21 @@ public class MapNode {
 
     public void setColor(Color color) {
         this.color = color;
+    }
+
+    public boolean isDiagonal() {
+        return diagonal;
+    }
+
+    public void setDiagonal(boolean diagonal) {
+        this.diagonal = diagonal;
+    }
+
+    public MapNode getParent() {
+        return parent;
+    }
+
+    public void setParent(MapNode parent) {
+        this.parent = parent;
     }
 }

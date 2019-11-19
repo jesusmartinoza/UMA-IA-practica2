@@ -12,7 +12,11 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import ia.uma.practica2.MapNode;
 import ia.uma.practica2.widgets.FilePicker;
@@ -20,13 +24,14 @@ import ia.uma.practica2.widgets.FilePicker;
 /**
  * Created by jesusmartinoza on 10/31/19.
  */
-public class Exercise3 extends ExerciseScreen {
+public class Exercise3 extends ExerciseScreen implements Runnable {
 
     private MapNode[][] mapData;
     public static int MAP_ROWS;
     public static int MAP_COLS;
     private MapNode src;
     private MapNode dest;
+    private Thread thread;
 
     public Exercise3(Game game) {
         super(game);
@@ -77,10 +82,10 @@ public class Exercise3 extends ExerciseScreen {
      */
     private double calculateHValue(int row, int col)
     {
-        // Return using the distance formula
-        return Math.sqrt(
-                (row - dest.getRow()) * (row - dest.getRow())
-                + (col - dest.getCol()) * (col - dest.getCol()));
+        double rowDistance = Math.pow(row - dest.getRow(), 2);
+        double colDistance = Math.pow(col - dest.getCol(), 2);
+
+        return Math.sqrt(rowDistance + colDistance);
     }
 
     /**
@@ -91,17 +96,17 @@ public class Exercise3 extends ExerciseScreen {
             MapNode tmpSrc = mapData
                     [MathUtils.random(0, MAP_ROWS - 1)]
                     [MathUtils.random(0, MAP_COLS - 1)];
-            tmpSrc.setColor(Color.YELLOW);
 
             MapNode tmpDest = mapData
                     [MathUtils.random(0, MAP_ROWS - 1)]
                     [MathUtils.random(0, MAP_COLS - 1)];
 
-            if(!tmpSrc.isObstacle())
+            if(!tmpSrc.isObstacle() && !tmpDest.isObstacle()) {
+                tmpSrc.setColor(Color.YELLOW);
+                tmpDest.setColor(Color.RED);
                 src = tmpSrc;
-
-            if(!tmpDest.isObstacle())
                 dest = tmpDest;
+            }
 
             System.out.println("Picking random path...");
         }
@@ -111,7 +116,7 @@ public class Exercise3 extends ExerciseScreen {
         return (i >= 0) && (i < MAP_ROWS) && (j >= 0) && (j < MAP_COLS);
     }
 
-    void aStarSearch()
+    private void aStarSearch()
     {
         // If the source is out of range
         if (!src.isValid())
@@ -147,9 +152,9 @@ public class Exercise3 extends ExerciseScreen {
         List<MapNode> closedList = new ArrayList<>();
         List<MapNode> openList = new ArrayList<>();
 
-        src.setF(0);
         src.setG(0);
-        src.setH(0);
+        src.setH(calculateHValue(src.getRow(), src.getCol()));
+        src.setF(src.getG() + src.getH());
 
         // Put the starting cell on the open list and set its
         // 'f' as 0
@@ -182,74 +187,109 @@ public class Exercise3 extends ExerciseScreen {
         */
         while (!openList.isEmpty())
         {
-            MapNode first = openList.remove(0);
-            closedList.add(first);
-            System.out.println("A* ...");
+            List<MapNode> nodesWithSameF = openList.stream()
+                    .filter((o) -> o.getF() == openList.get(0).getF())
+                    .collect(Collectors.toList());
+            nodesWithSameF.sort((n1, n2) -> Double.compare(n1.getH(), n2.getH()));
+            MapNode current = nodesWithSameF.get(0);
+
+            if(isDestination(current.getRow(), current.getCol()))
+            {
+                // Set the Parent of the destination cell
+                System.out.println("The destination cell is found\n");
+                foundDest = true;
+
+                // Draw Path
+                MapNode pathNode = current;
+                while(src != pathNode) {
+                    pathNode.setColor(Color.GREEN);
+                    pathNode = pathNode.getParent();
+                }
+                openList.clear();
+                continue;
+            }
+
+            //current.setColor(Color.GREEN);
+            openList.remove(0);
+            closedList.add(current);
 
             ArrayList<MapNode> neighbors = new ArrayList<>();
 
-            if(validCoordinate(first.getRow() - 1, first.getCol()))
-                neighbors.add(mapData[first.getRow() - 1][first.getCol()]);
+            if(validCoordinate(current.getRow() - 1, current.getCol())) {
+                MapNode neighbor = mapData[current.getRow() - 1][current.getCol()];
+                neighbor.setDiagonal(false);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow() + 1, first.getCol()))
-                neighbors.add(mapData[first.getRow() + 1][first.getCol()]);
+            if (validCoordinate(current.getRow() + 1, current.getCol())) {
+                MapNode neighbor = mapData[current.getRow() + 1][current.getCol()];
+                neighbor.setDiagonal(false);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow(), first.getCol() + 1))
-                neighbors.add(mapData[first.getRow()][first.getCol() + 1]);
+            if (validCoordinate(current.getRow(), current.getCol() + 1)) {
+                MapNode neighbor = mapData[current.getRow()][current.getCol() + 1];
+                neighbor.setDiagonal(false);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow(), first.getCol() - 1))
-                neighbors.add(mapData[first.getRow()][first.getCol() - 1]);
+            if (validCoordinate(current.getRow(), current.getCol() - 1)) {
+                MapNode neighbor = mapData[current.getRow()][current.getCol() - 1];
+                neighbor.setDiagonal(false);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow() - 1, first.getCol() + 1))
-                neighbors.add(mapData[first.getRow() - 1][first.getCol() + 1]);
+            if (validCoordinate(current.getRow() - 1, current.getCol() + 1)) {
+                MapNode neighbor = mapData[current.getRow() - 1][current.getCol() + 1];
+                neighbor.setDiagonal(true);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow() - 1, first.getCol() - 1))
-                neighbors.add(mapData[first.getRow() - 1][first.getCol() - 1]);
+            if (validCoordinate(current.getRow() - 1, current.getCol() - 1)) {
+                MapNode neighbor = mapData[current.getRow() - 1][current.getCol() - 1];
+                neighbor.setDiagonal(true);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow() + 1, first.getCol() + 1))
-                neighbors.add(mapData[first.getRow() + 1][first.getCol() + 1]);
+            if (validCoordinate(current.getRow() + 1, current.getCol() + 1)) {
+                MapNode neighbor = mapData[current.getRow() + 1][current.getCol() + 1];
+                neighbor.setDiagonal(true);
+                neighbors.add(neighbor);
+            }
 
-            if (validCoordinate(first.getRow() + 1, first.getCol() - 1))
-                neighbors.add(mapData[first.getRow() + 1][first.getCol() - 1]);
+            if (validCoordinate(current.getRow() + 1, current.getCol() - 1)) {
+                MapNode neighbor = mapData[current.getRow() + 1][current.getCol() - 1];
+                neighbor.setDiagonal(true);
+                neighbors.add(neighbor);
+            }
 
             for(MapNode n : neighbors) {
+                if(closedList.contains(n) || n.isObstacle())
+                    continue;
+
                 int r = n.getRow();
                 int c = n.getCol();
-                double gNew, hNew, fNew;
+                double gScore = current.getG() + (n.isDiagonal() ? 1.41 : 1); // length of this path.
+                if (!openList.contains(n))
+                    openList.add(n); // Discover a new node
+                //else if (gScore >= n.getG())
+                //    continue;
 
-                if(isDestination(r, c))
-                {
-                    // Set the Parent of the destination cell
-                    System.out.println("The destination cell is found\n");
-                    foundDest = true;
-                    n.setColor(Color.RED);
-                    return;
-                }
-                // If the successor is already on the closed
-                // list or if it is blocked, then ignore it.
-                // Else do the following
-                else if (!closedList.contains(n) && !n.isObstacle())
-                {
-                    gNew = first.getG() + 1.0;
-                    hNew = calculateHValue(r, c);
-                    fNew = gNew + hNew;
+                // This path is the best until now. Record it!
+                n.setParent(current);
+                n.setG(gScore);
+                n.setH(calculateHValue(r, c) * 0.5);
+                n.setF(n.getG() + n.getH());
 
-                    // If it isn’t on the open list, add it to
-                    // the open list. Make the current square
-                    // the parent of this square. Record the
-                    // f, g, and h costs of the square cell
-                    //                OR
-                    // If it is on the open list already, check
-                    // to see if this path to that square is better,
-                    // using 'f' cost as the measure.
-                    if ((n.getF() == MapNode.MAX_VALUE || n.getF() > fNew) && !openList.contains(n))
-                    {
-                        openList.add(n);
-                        if(n.getColor() != Color.YELLOW)
-                            n.setColor(Color.BLUE);
-                    }
+                if(n.getColor() != Color.RED) {
+                    Color color = Color.BLUE;
+                   //Color.abgr8888ToColor(color, Color.rgb888((float)(gScore) / 255, 0f, 0f));
+                    n.setColor(color);
                 }
             }
+
+            openList.sort((t1, t2) -> Double.compare(t1.getF(), t2.getF()));
+            System.out.println("A*...");
         }
 
         // When the destination cell is not found and the open
@@ -258,12 +298,15 @@ public class Exercise3 extends ExerciseScreen {
         // there is no way to destination cell (due to blockages)
         if (!foundDest)
             System.out.println("Failed to find the Destination Cell\n");
+
+        thread.interrupt();
     }
 
     @Override
     public void show() {
         super.show();
         TextButton button = new TextButton("Seleccionar archivo...", skin);
+        Exercise3 context = this;
 
         button.addListener(new ChangeListener() {
             @Override
@@ -272,9 +315,13 @@ public class Exercise3 extends ExerciseScreen {
                     @Override
                     protected void result(Object object) {
                         if (object.equals("OK")) {
+                            src = null;
+                            dest = null;
                             parseFile(getFile());
                             pickRandomPath();
-                            aStarSearch();
+
+                            thread = new Thread(context);
+                            thread.start();
                         }
                     }
                 };
@@ -332,5 +379,10 @@ public class Exercise3 extends ExerciseScreen {
     @Override
     public void dispose() {
 
+    }
+
+    @Override
+    public void run() {
+        aStarSearch();
     }
 }
