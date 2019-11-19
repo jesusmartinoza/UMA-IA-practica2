@@ -88,6 +88,82 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         return Math.sqrt(rowDistance + colDistance);
     }
 
+
+    /**
+     Generating all the 8 successor of this cell
+
+         N.W   N   N.E
+           \   |   /
+            \  |  /
+         W----Cell----E
+              / | \
+            /   |  \
+         S.W    S   S.E
+
+     Cell-->Popped Cell (i, j)
+     N -->  North       (i-1, j)
+     S -->  South       (i+1, j)
+     E -->  East        (i, j+1)
+     W -->  West           (i, j-1)
+     N.E--> North-East  (i-1, j+1)
+     N.W--> North-West  (i-1, j-1)
+     S.E--> South-East  (i+1, j+1)
+     S.W--> South-West  (i+1, j-1)
+     */
+    private List<MapNode> calculateNeighbors(MapNode node) {
+        ArrayList<MapNode> neighbors = new ArrayList<>();
+
+        if(validCoordinate(node.getRow() - 1, node.getCol())) {
+            MapNode neighbor = mapData[node.getRow() - 1][node.getCol()];
+            neighbor.setDiagonal(false);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow() + 1, node.getCol())) {
+            MapNode neighbor = mapData[node.getRow() + 1][node.getCol()];
+            neighbor.setDiagonal(false);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow(), node.getCol() + 1)) {
+            MapNode neighbor = mapData[node.getRow()][node.getCol() + 1];
+            neighbor.setDiagonal(false);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow(), node.getCol() - 1)) {
+            MapNode neighbor = mapData[node.getRow()][node.getCol() - 1];
+            neighbor.setDiagonal(false);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow() - 1, node.getCol() + 1)) {
+            MapNode neighbor = mapData[node.getRow() - 1][node.getCol() + 1];
+            neighbor.setDiagonal(true);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow() - 1, node.getCol() - 1)) {
+            MapNode neighbor = mapData[node.getRow() - 1][node.getCol() - 1];
+            neighbor.setDiagonal(true);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow() + 1, node.getCol() + 1)) {
+            MapNode neighbor = mapData[node.getRow() + 1][node.getCol() + 1];
+            neighbor.setDiagonal(true);
+            neighbors.add(neighbor);
+        }
+
+        if (validCoordinate(node.getRow() + 1, node.getCol() - 1)) {
+            MapNode neighbor = mapData[node.getRow() + 1][node.getCol() - 1];
+            neighbor.setDiagonal(true);
+            neighbors.add(neighbor);
+        }
+
+        return neighbors;
+    }
+
     /**
      * Pick random source and destination nodes
      */
@@ -112,10 +188,19 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         }
     }
 
+    /**
+     * Validate if the coordinate is in the map.
+     * @param i x
+     * @param j y
+     * @return result
+     */
     private boolean validCoordinate(int i, int j) {
         return (i >= 0) && (i < MAP_ROWS) && (j >= 0) && (j < MAP_COLS);
     }
 
+    /**
+     * Algorithm very chidori to find the shortest path.
+     */
     private void aStarSearch()
     {
         // If the source is out of range
@@ -156,35 +241,9 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         src.setH(calculateHValue(src.getRow(), src.getCol()));
         src.setF(src.getG() + src.getH());
 
-        // Put the starting cell on the open list and set its
-        // 'f' as 0
         openList.add(src);
-
-        // We set this boolean value as false as initially
-        // the destination is not reached.
         boolean foundDest = false;
 
-       /*
-        Generating all the 8 successor of this cell
-
-            N.W   N   N.E
-              \   |   /
-               \  |  /
-            W----Cell----E
-                 / | \
-               /   |  \
-            S.W    S   S.E
-
-        Cell-->Popped Cell (i, j)
-        N -->  North       (i-1, j)
-        S -->  South       (i+1, j)
-        E -->  East        (i, j+1)
-        W -->  West           (i, j-1)
-        N.E--> North-East  (i-1, j+1)
-        N.W--> North-West  (i-1, j-1)
-        S.E--> South-East  (i+1, j+1)
-        S.W--> South-West  (i+1, j-1)
-        */
         while (!openList.isEmpty())
         {
             List<MapNode> nodesWithSameF = openList.stream()
@@ -209,59 +268,9 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
                 continue;
             }
 
-            //current.setColor(Color.GREEN);
             openList.remove(0);
             closedList.add(current);
-
-            ArrayList<MapNode> neighbors = new ArrayList<>();
-
-            if(validCoordinate(current.getRow() - 1, current.getCol())) {
-                MapNode neighbor = mapData[current.getRow() - 1][current.getCol()];
-                neighbor.setDiagonal(false);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow() + 1, current.getCol())) {
-                MapNode neighbor = mapData[current.getRow() + 1][current.getCol()];
-                neighbor.setDiagonal(false);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow(), current.getCol() + 1)) {
-                MapNode neighbor = mapData[current.getRow()][current.getCol() + 1];
-                neighbor.setDiagonal(false);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow(), current.getCol() - 1)) {
-                MapNode neighbor = mapData[current.getRow()][current.getCol() - 1];
-                neighbor.setDiagonal(false);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow() - 1, current.getCol() + 1)) {
-                MapNode neighbor = mapData[current.getRow() - 1][current.getCol() + 1];
-                neighbor.setDiagonal(true);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow() - 1, current.getCol() - 1)) {
-                MapNode neighbor = mapData[current.getRow() - 1][current.getCol() - 1];
-                neighbor.setDiagonal(true);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow() + 1, current.getCol() + 1)) {
-                MapNode neighbor = mapData[current.getRow() + 1][current.getCol() + 1];
-                neighbor.setDiagonal(true);
-                neighbors.add(neighbor);
-            }
-
-            if (validCoordinate(current.getRow() + 1, current.getCol() - 1)) {
-                MapNode neighbor = mapData[current.getRow() + 1][current.getCol() - 1];
-                neighbor.setDiagonal(true);
-                neighbors.add(neighbor);
-            }
+            List<MapNode> neighbors = calculateNeighbors(current);
 
             for(MapNode n : neighbors) {
                 if(closedList.contains(n) || n.isObstacle())
@@ -278,7 +287,7 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
                 // This path is the best until now. Record it!
                 n.setParent(current);
                 n.setG(gScore);
-                n.setH(calculateHValue(r, c) * 0.5);
+                n.setH(calculateHValue(r, c) * 3);
                 n.setF(n.getG() + n.getH());
 
                 if(n.getColor() != Color.RED) {
@@ -342,14 +351,10 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         if(mapData != null) {
             this.shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-            for(int i = 0; i < mapData.length; i++)
-            {
-                for(int j = 0; j < mapData[i].length; j++)
-                {
-                    MapNode tile = mapData[i][j];
+            for (MapNode[] aMapData : mapData)
+                for (MapNode tile : aMapData)
                     tile.draw(shapeRenderer);
-                }
-            }
+
             this.shapeRenderer.end();
         }
 
