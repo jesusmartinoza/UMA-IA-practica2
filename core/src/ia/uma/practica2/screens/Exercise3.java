@@ -2,23 +2,30 @@ package ia.uma.practica2.screens;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputAdapter;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import ia.uma.practica2.MapNode;
+import ia.uma.practica2.ThemeColors;
 import ia.uma.practica2.widgets.FilePicker;
 
 /**
@@ -32,9 +39,13 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
     private MapNode src;
     private MapNode dest;
     private Thread thread;
+    private float explorationValue;
 
     public Exercise3(Game game) {
         super(game);
+
+        mapData = new MapNode[0][0];
+        explorationValue = 5;
     }
 
     /**
@@ -199,6 +210,15 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
     }
 
     /**
+     * Reset nodes values
+     */
+    private void reset() {
+        for (MapNode[] aMapData : mapData)
+            for (MapNode tile : aMapData)
+                tile.reset();
+    }
+
+    /**
      * Algorithm very chidori to find the shortest path.
      */
     private void aStarSearch()
@@ -261,7 +281,7 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
                 // Draw Path
                 MapNode pathNode = current;
                 while(src != pathNode) {
-                    pathNode.setColor(Color.GREEN);
+                    pathNode.setColor(Color.valueOf("#FFA200"));
                     pathNode = pathNode.getParent();
                 }
                 openList.clear();
@@ -287,24 +307,15 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
                 // This path is the best until now. Record it!
                 n.setParent(current);
                 n.setG(gScore);
-                n.setH(calculateHValue(r, c) * 3);
+                n.setH(calculateHValue(r, c) * explorationValue);
                 n.setF(n.getG() + n.getH());
 
-                if(n.getColor() != Color.RED) {
-                    Color color = Color.BLUE;
-                   //Color.abgr8888ToColor(color, Color.rgb888((float)(gScore) / 255, 0f, 0f));
-                    n.setColor(color);
-                }
+                n.setColor(Color.valueOf("#1B676C"));
             }
 
             openList.sort((t1, t2) -> Double.compare(t1.getF(), t2.getF()));
-            System.out.println("A*...");
         }
 
-        // When the destination cell is not found and the open
-        // list is empty, then we conclude that we failed to
-        // reach the destination cell. This may happen when the
-        // there is no way to destination cell (due to blockages)
         if (!foundDest)
             System.out.println("Failed to find the Destination Cell\n");
 
@@ -314,23 +325,26 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
     @Override
     public void show() {
         super.show();
-        TextButton button = new TextButton("Seleccionar archivo...", skin);
+        TextButton fileButton = new TextButton("Abrir", skin);
+        TextButton resetButton = new TextButton("Reiniciar", skin);
+        TextButton menuButton = new TextButton("Menu", skin);
+        Slider slider = new Slider(1,10,1,false, skin);
+        slider.setValue(5);
+        Label sliderLabel = new Label("Rapacidad:", skin);
+        sliderLabel.setStyle(new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+
         Exercise3 context = this;
 
-        button.addListener(new ChangeListener() {
+        fileButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
                 FilePicker filePicker = new FilePicker("Save graph", skin) {
                     @Override
                     protected void result(Object object) {
                         if (object.equals("OK")) {
-                            src = null;
-                            dest = null;
+                            src = dest = null;
                             parseFile(getFile());
-                            pickRandomPath();
-
-                            thread = new Thread(context);
-                            thread.start();
+                            //pickRandomPath();
                         }
                     }
                 };
@@ -339,13 +353,86 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
             }
         });
 
-        stage.addActor(button);
-        Gdx.input.setInputProcessor(stage);
+        resetButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                reset();
+                src = dest = null;
+            }
+        });
+
+        menuButton.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                game.setScreen(new MainScreen(game));
+            }
+        });
+
+        slider.addListener(new InputListener() {
+            @Override
+            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                float sliderValue = slider.getValue();
+
+                if(sliderValue > 5)
+                    explorationValue = sliderValue - 5;
+                else
+                    explorationValue = 0.2f * sliderValue;
+
+                reset();
+                System.out.println("Slider: " + sliderValue + " rapacidad: " + explorationValue);
+                thread = new Thread(context);
+                thread.start();
+            }
+            @Override
+            public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+                return true;
+            }
+        });
+
+        Table table = new Table();
+        table.setFillParent(true);
+        table.padRight(30);
+        table.right().add(fileButton).row();
+        table.add(resetButton).padTop(20).row();
+        table.add(menuButton).padTop(20).row();
+        table.add(sliderLabel).padTop(40).row();
+        table.add(slider).width(80).padTop(10).row();
+
+        stage.addActor(table);
+
+        InputMultiplexer inputMultiplexer = new InputMultiplexer();
+        inputMultiplexer.addProcessor(stage);
+        inputMultiplexer.addProcessor(new InputAdapter() {
+            @Override
+            public boolean touchDown(int screenX, int screenY, int pointer, int button) {
+                Vector3 input = new Vector3(screenX, screenY, 0);
+                camera.unproject(input);
+
+                int x = (int)input.x;
+                int y = (int)input.y;
+
+                if(src == null)
+                    src = new MapNode('.', x, y);
+                else if(dest == null)
+                    dest = new MapNode('.', x, y);
+
+                if(src != null && dest != null) {
+                    System.out.print(src.getRow());
+                    src.setColor(Color.YELLOW);
+                    dest.setColor(Color.RED);
+                    thread = new Thread(context);
+                    thread.start();
+                }
+
+                return true;
+            }
+        });
+        Gdx.input.setInputProcessor(inputMultiplexer);
     }
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(ThemeColors.primary.r, ThemeColors.primary.g, ThemeColors.primary.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         if(mapData != null) {
@@ -355,39 +442,17 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
                 for (MapNode tile : aMapData)
                     tile.draw(shapeRenderer);
 
+            if(src != null) src.draw(shapeRenderer);
+            if(dest != null) dest.draw(shapeRenderer);
             this.shapeRenderer.end();
         }
 
         super.render(delta);
-    }
-
-    @Override
-    public void resize(int width, int height) {
-
-    }
-
-    @Override
-    public void pause() {
-
-    }
-
-    @Override
-    public void resume() {
-
-    }
-
-    @Override
-    public void hide() {
-
-    }
-
-    @Override
-    public void dispose() {
-
-    }
+   }
 
     @Override
     public void run() {
-        aStarSearch();
+        if(mapData.length > 0)
+            aStarSearch();
     }
 }

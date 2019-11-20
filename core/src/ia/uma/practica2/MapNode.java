@@ -32,13 +32,20 @@ public class MapNode {
         this.f = MAX_VALUE;
         this.g = MAX_VALUE;
         this.h = 0;
-        this.color = isObstacle() ? Color.GRAY : Color.DARK_GRAY;
+        this.color = isObstacle() ? ThemeColors.primary : ThemeColors.secondary;
         this.diagonal = false;
     }
 
     public void draw(ShapeRenderer shapeRenderer) {
         shapeRenderer.setColor(color);
         shapeRenderer.rect(row, col, 1, 1);
+    }
+
+    public void reset() {
+        this.f = MAX_VALUE;
+        this.g = MAX_VALUE;
+        this.h = 0;
+        this.color = isObstacle() ? ThemeColors.primary  : ThemeColors.secondary;
     }
 
     /**

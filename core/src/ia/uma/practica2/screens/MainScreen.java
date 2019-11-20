@@ -15,6 +15,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.utils.Align;
 
+import ia.uma.practica2.ThemeColors;
+
 /**
  * Created by jesusmartinoza on 10/31/19.
  */
@@ -44,7 +46,7 @@ public class MainScreen implements Screen {
         title.setColor(Color.WHITE);
         title.setFontScale(1.5f);
         author.setAlignment(Align.center);
-        author.setColor(Color.WHITE);
+        author.setStyle(new Label.LabelStyle(new BitmapFont(), Color.WHITE));
 
         // Set listeners
         button1.addListener(new ChangeListener() {
@@ -86,7 +88,7 @@ public class MainScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(ThemeColors.primary.r, ThemeColors.primary.g, ThemeColors.primary.b, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
         stage.draw();
