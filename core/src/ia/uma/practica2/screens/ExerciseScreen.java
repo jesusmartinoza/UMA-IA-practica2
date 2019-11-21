@@ -19,8 +19,8 @@ public class ExerciseScreen implements Screen {
     protected Skin skin;
     protected Stage stage;
     protected ShapeRenderer shapeRenderer;
-    private Viewport viewport;
     protected static OrthographicCamera camera;
+    private Viewport viewport;
 
     public ExerciseScreen(Game game) {
         this.game = game;

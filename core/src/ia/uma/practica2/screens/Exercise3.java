@@ -84,6 +84,12 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         }
     }
 
+    /**
+     * Compare row and column with destination node values
+     * @param row
+     * @param column
+     * @return boolean indicating if destination
+     */
     private boolean isDestination(int row, int column) {
         return row == dest.getRow() && column == dest.getCol();
     }
@@ -98,7 +104,6 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
 
         return Math.sqrt(rowDistance + colDistance);
     }
-
 
     /**
      Generating all the 8 successor of this cell
@@ -220,9 +225,14 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
 
     /**
      * Algorithm very chidori to find the shortest path.
+     * TODO: Bugfix path generation
      */
     private void aStarSearch()
     {
+        List<MapNode> closedList = new ArrayList<>();
+        List<MapNode> openList = new ArrayList<>();
+        boolean foundDest = false;
+
         // If the source is out of range
         if (!src.isValid())
         {
@@ -251,18 +261,11 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
             return;
         }
 
-        // Create a closed list and initialise it to false which means
-        // that no cell has been included yet
-        // This closed list is implemented as a boolean 2D array
-        List<MapNode> closedList = new ArrayList<>();
-        List<MapNode> openList = new ArrayList<>();
-
         src.setG(0);
         src.setH(calculateHValue(src.getRow(), src.getCol()));
         src.setF(src.getG() + src.getH());
 
         openList.add(src);
-        boolean foundDest = false;
 
         while (!openList.isEmpty())
         {
@@ -322,19 +325,24 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
         thread.interrupt();
     }
 
-    @Override
-    public void show() {
-        super.show();
+    /**
+     * Create UI stuff
+     */
+    private void initUI() {
         TextButton fileButton = new TextButton("Abrir", skin);
         TextButton resetButton = new TextButton("Reiniciar", skin);
         TextButton menuButton = new TextButton("Menu", skin);
         Slider slider = new Slider(1,10,1,false, skin);
-        slider.setValue(5);
         Label sliderLabel = new Label("Rapacidad:", skin);
         sliderLabel.setStyle(new Label.LabelStyle(new BitmapFont(), Color.WHITE));
+        Table table = new Table();
+        InputMultiplexer inputMultiplexer = new InputMultiplexer();
 
         Exercise3 context = this;
 
+        slider.setValue(5);
+
+        // Set listeners
         fileButton.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
@@ -389,7 +397,7 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
             }
         });
 
-        Table table = new Table();
+        // Create table to draw buttons and slider
         table.setFillParent(true);
         table.padRight(30);
         table.right().add(fileButton).row();
@@ -400,7 +408,7 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
 
         stage.addActor(table);
 
-        InputMultiplexer inputMultiplexer = new InputMultiplexer();
+        // Add input processor to stage
         inputMultiplexer.addProcessor(stage);
         inputMultiplexer.addProcessor(new InputAdapter() {
             @Override
@@ -428,6 +436,12 @@ public class Exercise3 extends ExerciseScreen implements Runnable {
             }
         });
         Gdx.input.setInputProcessor(inputMultiplexer);
+    }
+
+    @Override
+    public void show() {
+        super.show();
+        initUI();
     }
 
     @Override
